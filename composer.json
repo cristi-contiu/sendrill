@@ -1,0 +1,23 @@
+{
+    "name": "cristi-contiu/sendy-smtp-webhooks",
+    "description": "Sendy integration with SMTP providers, like Mandrill, via webhooks",
+    "license": "MIT",
+    "keywords": ["sendy", "webhooks", "mandrill", "smtp"],
+    "authors": [
+        {
+            "name": "Cristi Contiu",
+            "email": "cristi@contiu.ro",
+            "homepage": "http://www.bixel.ro",
+            "role": "Developer"
+        }
+    ],
+    "require": {},
+    "require-dev": {
+        "phpunit/phpunit": "4.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "CristiContiu\\SendySMTPWebhooks\\": "src"
+        }
+    }
+}
