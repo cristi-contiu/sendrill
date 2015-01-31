@@ -9,7 +9,7 @@ Allows Sendy, the popular self-hosted email marketing software, to receive and p
 ## Changes to Sendy code
 In order for the app to identify the subscriber's list and campaign upon receiving an event and allocate it properly, a small change must be made to Sendy's code. The required code varies between SMTP providers.
 
-**For Mandrill**: In the files `*SENDY_ROOT*/scheduled.php` and `*SENDY_ROOT*/includes/create/send-now.php`, before `$mail->send();` add the following:
+**For Mandrill**: In the files `SENDY_ROOT/scheduled.php` and `SENDY_ROOT/includes/create/send-now.php`, before `$mail->send();` add the following:
 
     $mail->AddCustomHeader('X-MC-Metadata: { "sendy_list_id": "' . $subscriber_list . '" }');
     $mail->AddCustomHeader('X-MC-Metadata: { "sendy_campaign_id": "' . $campaign_id . '" }');
