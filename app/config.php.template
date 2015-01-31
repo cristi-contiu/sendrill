@@ -1,15 +1,43 @@
 <?php
+/**
+ * Configuration file template for Sendy SMTP webhooks by Cristi Contiu
+ *
+ * Rename this file to "config.php" to be used in application
+ *
+ * @package    CristiContiu\SendySMTPWebhooks
+ * @author     Cristi Contiu <cristi@contiu.ro>
+ * @license    MIT
+ * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ */
 
-// Add to sendy/scheduled.php:532, sendy/includes/create/send-now.php:508
-// $mail->AddCustomHeader('X-MC-Metadata: { "sendy_list_id": "' . $subscriber_list . '" }');
-// $mail->AddCustomHeader('X-MC-Metadata: { "sendy_campaign_id": "' . $campaign_id . '" }');
 
 /**
- *  Sendy-Webhook settings
+ * Webhook URL EXACTLY as entered in Mandrill (including query parameters, if applicable)
  */
-define('SW_SENDY_CONFIG_FILE',     '/../includes/config.php');
-define('SW_MANDRILL_WEBHOOK_URL',  '');   // the webhook URL EXACTLY as entered in Mandrill (including query parameters)
-define('SW_MANDRILL_WEBHOOK_KEY',  '');                    // the webhook key given by Mandrill
-define('SW_ALLOWED_SOFT_BOUNCES',  3);                                           // number of allowed soft bounces before converting to hard bounce
-define('SW_DEBUG',                 true);
-define('SW_LOG_FILE',              'app/app.log');
+define('SW_MANDRILL_WEBHOOK_URL', '');
+
+/**
+ * Webhook Key provided by Mandrill
+ * Leave empty to disable Mandrill webhook authentication (will accept messages from other sources)
+ */
+define('SW_MANDRILL_WEBHOOK_KEY', '');
+
+/**
+ * Path to sendy config.php file - if you placed this script in a folder in sendy's root, no changes are required
+ */
+define('SW_SENDY_CONFIG_FILE', '/../includes/config.php');
+
+/**
+ * Number of soft bounces allowed before converting to hard bounce
+ */
+define('SW_ALLOWED_SOFT_BOUNCES',  3);
+
+/**
+ * Turn on/off debugging messages in log file
+ */
+define('SW_DEBUG', false);
+
+/**
+ * Path to application log file
+ */
+define('SW_LOG_FILE', 'app/app.log');
