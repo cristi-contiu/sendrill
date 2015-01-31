@@ -1,3 +1,4 @@
 /vendor
-/app
+/app/app.log
+/app/config.php
 composer.lock
