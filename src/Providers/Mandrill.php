@@ -3,8 +3,8 @@
  * Mandrill SMTP provider class
  *
  * The rules of authentication and events reading are up-to-date 
- * as of February 2015 and are available in Mandrill documentation
- * at http://help.mandrill.com/forums/22050212-Webhooks-Basics
+ * as of February 2015 according to Mandrill documentation at
+ * http://help.mandrill.com/forums/22050212-Webhooks-Basics
  *
  * @package    CristiContiu\SendySMTPWebhooks
  * @author     Cristi Contiu <cristi@contiu.ro>
@@ -67,15 +67,17 @@ class Mandrill extends AbstractProvider
 
         // checking request method; POST and HEAD (for url checking) are allowed
         if ( !in_array( $this->request->getMethod(), array('POST', 'HEAD') ) ) {
-            $this->logger->addDebug('Invalid request method', (array) $this->request);
+            $this->logger->addDebug('Invalid request method', array($this->request->getMethod()));
             return false;
         }
 
-        // verifying signature in custom header
-        $requestSig = $this->request->headers->get('HTTP_X_MANDRILL_SIGNATURE');
-        $expectedSig = $this->generateSignature($this->webhookKey, $this->webhookUrl, $this->request->request->all());
-        if ( $requestSig !== $expectedSig ) {
-            $this->logger->addDebug('Invalid Mandrill signature', (array) $this->request);
+        // verifying signature from custom header
+        $signatures = array(
+            'request'  => $this->request->headers->get('X-Mandrill-Signature'),
+            'required' => $this->generateSignature($this->webhookKey, $this->webhookUrl, $this->request->request->all()),
+        );
+        if ( $signatures['request'] !== $signatures['required'] ) {
+            $this->logger->addDebug('Invalid Mandrill signature', $signatures);
             return false;
         }
 
