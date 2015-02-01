@@ -1,110 +1,154 @@
 <?php
+/**
+ * Mandrill SMTP provider class
+ *
+ * The rules of authentication and events reading are up-to-date 
+ * as of February 2015 and are available in Mandrill documentation
+ * at http://help.mandrill.com/forums/22050212-Webhooks-Basics
+ *
+ * @package    CristiContiu\SendySMTPWebhooks
+ * @author     Cristi Contiu <cristi@contiu.ro>
+ * @license    MIT
+ * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ */
 
 namespace CristiContiu\SendySMTPWebhooks\Providers;
 
-use CristiContiu\SendySMTPWebhooks\Tracker;
+use Symfony\Component\HttpFoundation\Request;
+use CristiContiu\SendySMTPWebhooks\SendyListener;
 
 class Mandrill extends AbstractProvider
 {
-    
+    /**
+     * Name used to identify provider
+     * @var string
+     */
+    protected $name = 'Mandrill';
+
+    /**
+     * Mandrill webhook key from config
+     * @var string
+     */
+    protected $webhookKey;
+
+    /**
+     * Mandrill webhook url from config
+     * @var string
+     */
+    protected $webhookUrl;
+
+    /**
+     * Extends common functionality of constructor
+     * @param Request $request 
+     * @param array $config 
+     * @return null
+     */
+    public function __construct( Request $request, $config )
+    {
+        parent::__construct($request, $config);
+
+        $this->webhookKey = $config['providers']['mandrill']['webhookKey'];
+        $this->webhookUrl = $config['providers']['mandrill']['webhookUrl'];
+    }
+
+    /**
+     * Authenticates the request following Mandrill instructions available at
+     * http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
+     *
+     * @return boolean
+     */
     public function authenticate()
     {
-        $params = $this->getParams();
-    
-        if ( $params->configWebhookKey ) {
-            if ( $params->requestMethod !== 'POST' ) {
-                $this->getLogger()->addDebug('Invalid request method', $params->toArray());
-                return false;
-            }
-            if ( empty($params->requestSignature) ) {
-                $this->getLogger()->addDebug('Missing Mandrill signature', $params->toArray());
-                return false;
-            }
-            $expectedSig = $this->generateSignature($params->configWebhookKey, $params->configWebhookUrl, $params->requestBody);
-            if ( $params->requestSignature !== $expectedSig ) {
-                $this->getLogger()->addDebug('Wrong Mandrill webhook Key', $params->toArray());
-                return false;
-            }
+        // if no key or url provided, authentication is disabled
+        if ( !$this->webhookKey || !$this->webhookUrl ) {
+            $this->logger->addDebug('Authentication disabled - Mandrill webhook key and url not provided in config');
+            return true;
+        }
+
+        // checking request method; POST and HEAD (for url checking) are allowed
+        if ( !in_array( $this->request->getMethod(), array('POST', 'HEAD') ) ) {
+            $this->logger->addDebug('Invalid request method', (array) $this->request);
+            return false;
+        }
+
+        // verifying signature in custom header
+        $requestSig = $this->request->headers->get('HTTP_X_MANDRILL_SIGNATURE');
+        $expectedSig = $this->generateSignature($this->webhookKey, $this->webhookUrl, $this->request->request->all());
+        if ( $requestSig !== $expectedSig ) {
+            $this->logger->addDebug('Invalid Mandrill signature', (array) $this->request);
+            return false;
         }
 
         return true;
     }
 
+    /**
+     * Reads and sets the events from the request
+     * @return boolean
+     */
     public function readEvents()
-    {
-        $params = $this->getParams();
-        
-        if ( empty($params->requestBody) ) {
-            $this->getLogger()->addDebug('Empty request body', $params->toArray());
+    {        
+        if ( !$this->request->get('mandrill_events') ) {
+            $this->logger->addDebug('Empty or missing events JSON', (array) $this->request);
             return false;
         }
-        if ( !isset($params->requestBody['mandrill_events']) ) {
-            $this->getLogger()->addDebug('Empty events array', $params->toArray());
-            return false;
-        }
-        $events = json_decode( $params->requestBody['mandrill_events'], true );
+        $events = json_decode( $this->request->get('mandrill_events'), true );
         if ( json_last_error() !== JSON_ERROR_NONE ) {
-            $this->getLogger()->addDebug('Invalid events JSON', $params->toArray());
+            $this->logger->addDebug('Invalid events JSON', (array) $this->request);
             return false;
         }
-        $this->setEvents($events);
+        $this->events = $events;
         return true;
     }
 
-    public function processEvents( Tracker $tracker )
+    /**
+     * Processes and maps the events to sendyand updates Sendy's database
+     * @param  SendyListener  $sendyListener
+     * @return boolean
+     */
+    public function processEvents( SendyListener $sendyListener )
     {
-        foreach ( $this->getEvents() as $event ) {
+        foreach ( $this->events as $event ) {
             $name = $event['event'];
             $email = $event['msg']['email'];
             $msgID = $event['msg']['_id'];
             $listID = $event['msg']['metadata']['sendy_list_id'];
             $campaignID = $event['msg']['metadata']['sendy_campaign_id'];
             
-            $this->getLogger()->addDebug("Received event '$name' for '$email'", $event);
+            $this->logger->addDebug("Received event '$name' for '$email'", $event);
             
             switch ( $name ) {
                 case 'send': // message has been sent successfully
-                    $tracker->send( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->send( $msgID, $email, $listID, $campaignID );
                     break;  
                 case 'deferral': // message has been sent, but the receiving server has indicated mail is being delivered too quickly and Mandrill should slow down sending temporarily
-                    $tracker->send( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->send( $msgID, $email, $listID, $campaignID );
                     break;
                 case 'hard_bounce': // message has hard bounced
-                    $tracker->hardBounce( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->hardBounce( $msgID, $email, $listID, $campaignID );
                     break;
                 case 'soft_bounce': // message has soft bounced
-                    $tracker->softBounce( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->softBounce( $msgID, $email, $listID, $campaignID );
                     break;
                 case 'spam': // recipient marked a message as spam
-                    $tracker->spam( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->spam( $msgID, $email, $listID, $campaignID );
                     break;
                 case 'reject': // message was rejected
-                    $tracker->reject( $msgID, $email, $listID, $campaignID );
+                    $sendyListener->reject( $msgID, $email, $listID, $campaignID );
                     break;
                 case 'open':  // recipient opened a message; will only occur when open tracking is enabled
                 case 'click': // recipient clicked a link in a message; will only occur when click tracking is enabled
                 case 'unsub': // recipient unsubscribed
                 default:
-                    $tracker->unsupported( $name, $msgID, $email, $listID, $campaignID );
+                    $sendyListener->unsupported( $name, $msgID, $email, $listID, $campaignID );
                     break;
             }
         }
     }
-
-    public function setParamsFromGlobals() 
-    {
-        $params = new MandrillParams();
-        $params->requestMethod = $_SERVER['REQUEST_METHOD'];
-        $params->requestSignature = $_SERVER['HTTP_X_MANDRILL_SIGNATURE'];
-        $params->requestBody = $_POST;
-        $params->configWebhookKey = SW_MANDRILL_WEBHOOK_KEY;
-        $params->configWebhookUrl = SW_MANDRILL_WEBHOOK_URL;
-        
-        $this->setParams($params);
-    }
     
     /**
      * Generates a base64-encoded signature for a Mandrill webhook request.
+     * http://help.mandrill.com/entries/23704122-Authenticating-webhook-requests
      *
      * @param string $webhook_key the webhook's authentication key
      * @param string $url the webhook url
@@ -121,5 +165,4 @@ class Mandrill extends AbstractProvider
 
         return base64_encode(hash_hmac('sha1', $signed_data, $webhook_key, true));
     }
-
 }

@@ -1,62 +1,74 @@
 <?php
+/**
+ * Template for provider classes with basic functionality
+ *
+ * @package    CristiContiu\SendySMTPWebhooks
+ * @author     Cristi Contiu <cristi@contiu.ro>
+ * @license    MIT
+ * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ */
 
 namespace CristiContiu\SendySMTPWebhooks\Providers;
 
-use CristiContiu\SendySMTPWebhooks\Tracker;
+use Symfony\Component\HttpFoundation\Request;
+use Monolog\Logger;
+use CristiContiu\SendySMTPWebhooks\SendyListener;
 
 abstract class AbstractProvider 
 {
-    private $params;
+    /**
+     * Name used to identify provider
+     * @var string
+     */
+    protected $name;
 
-    private $events;
+    /**
+     * @var Symfony\Component\HttpFoundation\Request
+     */
+    protected $request;
 
-    private $logger;
+    /**
+     * @var Monolog\Logger
+     */
+    protected $logger;
 
-    public function __construct( $logger )
+    /**
+     * Events received from SMTP provider via webhook
+     * @var array
+     */
+    protected $events;
+
+    /**
+     * Sets up common properties
+     * @param Request $request 
+     * @param array   $config 
+     * @return null
+     */
+    public function __construct( Request $request, $config )
     {
-        $this->setLogger($logger);
+        $this->request = $request;
+
+        $this->logger = new Logger( $this->name );
+        $this->logger->pushHandler( $config['logHandler'] );
     }
- 
+
+    /**
+     * Authenticates the request following provider's instructions
+     * @return boolean
+     */
     abstract public function authenticate();
 
+    /**
+     * Reads and sets the events from the request
+     * @return boolean
+     */
     abstract public function readEvents();
 
-    abstract public function processEvents( Tracker $tracker );
-
-    abstract public function setParamsFromGlobals();
-
-
-    public function getParams()
-    {
-        return $this->params;
-    }
-
-    public function setParams( $params )
-    {
-        $this->params = $params;
-        return $this;
-    }
-
-    public function getEvents()
-    {
-        return $this->events;
-    }
-
-    public function setEvents( $events )
-    {
-        $this->events = $events;
-        return $this;
-    }
-
-    public function getLogger()
-    {
-        return $this->logger;
-    }
-
-    public function setLogger( $logger )
-    {
-        $this->logger = $logger;
-        return $this;
-    }
+    /**
+     * Processes and maps the events to sendyand updates Sendy's database
+     * @param  SendyListener  $sendyListener
+     * @return boolean
+     */
+    abstract public function processEvents( SendyListener $sendyListener );
 
 }
