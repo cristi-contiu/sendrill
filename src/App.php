@@ -67,7 +67,7 @@ class App
      */
     static public function getConfigFromFiles()
     {
-        $config = (array) require __DIR__ . '/../app/default.config.php';
+        $config = (array) require __DIR__ . '/../app/fallback_config.php';
         // check and include local config file
         if ( file_exists(__DIR__ . '/../app/config.php') ) {
             $localConfig = (array) include __DIR__ . '/../app/config.php';
