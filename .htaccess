@@ -8,5 +8,5 @@ Deny from All
 
 <IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule ^(.*)$ index.php?$1 [L]
+    RewriteRule ^(.*)$ index.php?provider=$1 [L]
 </IfModule>
