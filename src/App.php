@@ -36,17 +36,17 @@ class App
         if ( isset($config['providers'][$getProvider]) ) {
             $provider = new $config['providers'][$getProvider]['class']($request, $config);
         } else {
-            $appLog->addError("Unsupported provider '$getProvider'", (array) $request);
+            $appLog->addError("Unsupported provider", array($getProvider));
             return new Response('Unsupported provider', Response::HTTP_NOT_IMPLEMENTED);
         }
 
         if ( $provider->authenticate() == false ) {
-            $appLog->addError('Unauthorized', (array) $request);
-            return new Response('Unauthorized', Response::HTTP_UNAUTHORIZED);
+            $appLog->addError('Unauthorized request', array($request->server->get('REMOTE_ADDR')));
+            return new Response('Unauthorized request', Response::HTTP_UNAUTHORIZED);
         }
 
         if ( $provider->readEvents() == false ) {
-            $appLog->addError('Invalid input', (array) $request);
+            $appLog->addError('Invalid input');
             return new Response('Invalid input', Response::HTTP_BAD_REQUEST);
         }
 
