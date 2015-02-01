@@ -67,7 +67,12 @@ class App
      */
     static public function getConfigFromFiles()
     {
-        $config = require __DIR__ . '/../app/default.config.php';
+        $config = (array) require __DIR__ . '/../app/default.config.php';
+        // check and include local config file
+        if ( file_exists(__DIR__ . '/../app/config.php') ) {
+            $localConfig = (array) include __DIR__ . '/../app/config.php';
+            $config = array_replace_recursive($config, $localConfig);
+        }
         $config['sendy'] = self::getSendyConfig($config['sendyConfigFile']);
         $config['logHandler'] = new StreamHandler(__DIR__ . '/../' . $config['logFile'], $config['debug'] ? Logger::DEBUG : Logger::INFO);
         return $config;
