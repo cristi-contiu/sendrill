@@ -1,19 +1,39 @@
 <?php
+/**
+ * Mail events listener that updates subscriber status in Sendy's database
+ *
+ * @package    CristiContiu\SendySMTPWebhooks
+ * @author     Cristi Contiu <cristi@contiu.ro>
+ * @license    MIT
+ * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ */
 
 namespace CristiContiu\SendySMTPWebhooks;
 
 use Monolog\Logger;
 
-class Tracker
+class SendyListener
 {
+    /**
+     * @var mysqli
+     */
     private $mysqli;
 
+    /**
+     * @var Monolog\Logger
+     */
     private $logger;
 
-    public function __construct( $globalLogHandler, $dbHost, $dbUser, $dbPass, $dbName, $dbPort, $charset )
+    /**
+     * Sets up logger and database connection
+     * @param array $config 
+     */
+    public function __construct( $config )
     {
-        $this->logger = new Logger('Tracker');
-        $this->logger->pushHandler($globalLogHandler);
+        $this->logger = new Logger('SendyListener');
+        $this->logger->pushHandler($config['logHandler']);
+
+        extract($config['sendy']);
 
         $this->mysqli = new \mysqli( $dbHost, $dbUser, $dbPass, $dbName, $dbPort );
         if ( $this->mysqli->connect_errno ) {
