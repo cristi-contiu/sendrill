@@ -28,7 +28,7 @@ class App
      */
     static public function handle( Request $request, $config )
     {
-        $appLog = new Logger( get_class() );
+        $appLog = new Logger('App');
         $appLog->pushHandler($config['logHandler']);
 
         // checking and creating requested povider
