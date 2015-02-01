@@ -17,12 +17,18 @@ class SendyListener
     /**
      * @var mysqli
      */
-    private $mysqli;
+    protected $mysqli;
 
     /**
      * @var Monolog\Logger
      */
-    private $logger;
+    protected $logger;
+
+    /**
+     * Number of soft bounces allowed before converting to hard bounce
+     * @var integer
+     */
+    protected $allowedSoftBounces = 3;
 
     /**
      * Sets up logger and database connection
@@ -33,14 +39,17 @@ class SendyListener
         $this->logger = new Logger('SendyListener');
         $this->logger->pushHandler($config['logHandler']);
 
-        extract($config['sendy']);
+        if (isset($config['sendyAllowedSoftBounces'])) {
+            $this->allowedSoftBounces = intval($config['sendyAllowedSoftBounces']);
+        }
 
+        // connecting to MySQL
+        extract($config['sendy']);
         $this->mysqli = new \mysqli( $dbHost, $dbUser, $dbPass, $dbName, $dbPort );
         if ( $this->mysqli->connect_errno ) {
             $this->logger->addError( "Failed to connect to MySQL: (" . $this->mysqli->connect_errno . ") " . $this->mysqli->connect_error );
             throw new \Exception( "Database error", 500 );
         }
-
         if ( !$this->mysqli->set_charset($charset) ) {
             $this->logger->addError( "Failed to set MySQL character set '$charset': (" . $this->mysqli->connect_errno . ") " . $this->mysqli->connect_error );
             throw new \Exception( "Database error", 500 );
@@ -70,7 +79,7 @@ class SendyListener
 
     public function softBounce( $msgID, $email, $listID, $campaignID )
     {
-    	$asb = $this->mysqli->real_escape_string( intval(SW_ALLOWED_SOFT_BOUNCES) );
+    	$asb = $this->mysqli->real_escape_string( $this->allowedSoftBounces );
         $sqls = "UPDATE subscribers SET bounce_soft = bounce_soft + 1, bounced = IF(bounce_soft > '$asb', 1, bounced) "
               . "WHERE email = '{email}' AND messageID = '{msgID}' LIMIT 1;";
         $this->execute('softBounce', $sqls, $msgID, $email, $listID, $campaignID);
@@ -85,7 +94,7 @@ class SendyListener
     
     public function unsupported( $action, $msgID, $email, $listID, $campaignID )
     {
-        $this->logger->addDebug("Tracker action '$action' is not supported - sent for '$email', msgID '$msgID'");
+        $this->logger->addDebug("Action '$action' is not supported - sent for '$email', msgID '$msgID'");
     }
 
     private function execute( $action, $sqls, $msgID, $email, $listID, $campaignID ) 
@@ -96,9 +105,9 @@ class SendyListener
             $sql = str_replace("{email}", $this->mysqli->real_escape_string($email), $sql);
             $sql = str_replace("{listID}", $this->mysqli->real_escape_string($listID), $sql);
             $sql = str_replace("{campaignID}", $this->mysqli->real_escape_string($campaignID), $sql);
-            $this->logger->addDebug("Tracker->$action executes query: '$sql'");
+            $this->logger->addDebug("Action '$action' query: '$sql'");
             if ( $this->mysqli->query($sql) == false ) {
-                $this->logger->addError("MySQL error in Tracker->$action : " . $this->mysqli->error);
+                $this->logger->addError("MySQL error in action '$action': " . $this->mysqli->error);
             }
         }
     }
