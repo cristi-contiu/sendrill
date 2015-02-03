@@ -1,23 +1,23 @@
 <?php
 /**
- * Main application class
+ * Sendrill application class
  *
- * @package    CristiContiu\SendySMTPWebhooks
+ * @package    CristiContiu\Sendrill
  * @author     Cristi Contiu <cristi@contiu.ro>
  * @license    MIT
- * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ * @link       https://github.com/cristi-contiu/sendrill
  */
 
-namespace CristiContiu\SendySMTPWebhooks;
+namespace CristiContiu\Sendrill;
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
-use CristiContiu\SendySMTPWebhooks\Providers;
-use CristiContiu\SendySMTPWebhooks\SendyListener;
+use CristiContiu\Sendrill\Providers;
+use CristiContiu\Sendrill\SendyListener;
 
-class App
+class Sendrill
 {
     /**
      * Handles the HTTP Request and returns a response

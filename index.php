@@ -1,20 +1,20 @@
 <?php
 /**
- * Front controller for Sendy SMTP Webhooks
+ * Front controller for Sendrill
  *
- * @package    CristiContiu\SendySMTPWebhooks
+ * @package    CristiContiu\Sendrill
  * @author     Cristi Contiu <cristi@contiu.ro>
  * @license    MIT
- * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ * @link       https://github.com/cristi-contiu/sendrill
  */
 
 require_once(__DIR__ . '/vendor/autoload.php');
 
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use CristiContiu\SendySMTPWebhooks\App;
+use CristiContiu\Sendrill\Sendrill;
 
 $request = Request::createFromGlobals();
-$config = App::getConfigFromFiles();
-$response = App::handle($request, $config);
+$config = Sendrill::getConfigFromFiles();
+$response = Sendrill::handle($request, $config);
 $response->send();

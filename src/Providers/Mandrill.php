@@ -6,16 +6,16 @@
  * as of February 2015 according to Mandrill documentation at
  * http://help.mandrill.com/forums/22050212-Webhooks-Basics
  *
- * @package    CristiContiu\SendySMTPWebhooks
+ * @package    CristiContiu\Sendrill
  * @author     Cristi Contiu <cristi@contiu.ro>
  * @license    MIT
- * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ * @link       https://github.com/cristi-contiu/sendrill
  */
 
-namespace CristiContiu\SendySMTPWebhooks\Providers;
+namespace CristiContiu\Sendrill\Providers;
 
 use Symfony\Component\HttpFoundation\Request;
-use CristiContiu\SendySMTPWebhooks\SendyListener;
+use CristiContiu\Sendrill\SendyListener;
 
 class Mandrill extends AbstractProvider
 {

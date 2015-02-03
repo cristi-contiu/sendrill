@@ -2,13 +2,13 @@
 /**
  * Mail events listener that updates subscriber status in Sendy's database
  *
- * @package    CristiContiu\SendySMTPWebhooks
+ * @package    CristiContiu\Sendrill
  * @author     Cristi Contiu <cristi@contiu.ro>
  * @license    MIT
- * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ * @link       https://github.com/cristi-contiu/sendrill
  */
 
-namespace CristiContiu\SendySMTPWebhooks;
+namespace CristiContiu\Sendrill;
 
 use Monolog\Logger;
 

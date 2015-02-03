@@ -1,13 +1,13 @@
 <?php
 /**
- * Configuration file template for Sendy SMTP webhooks
+ * Configuration file template for Sendrill
  *
  * Copy this file to 'config.php' to be used by application
  *
- * @package    CristiContiu\SendySMTPWebhooks
+ * @package    CristiContiu\Sendrill
  * @author     Cristi Contiu <cristi@contiu.ro>
  * @license    MIT
- * @link       https://github.com/cristi-contiu/sendy-smtp-webhooks
+ * @link       https://github.com/cristi-contiu/sendrill
  */
 
 // Copy this file to 'config.php' to be used by application
